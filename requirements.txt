@@ -7,4 +7,5 @@ langchain-core
 langchain-huggingface
 langchain-ollama
 openpyxl
+sentence-transformers
 
