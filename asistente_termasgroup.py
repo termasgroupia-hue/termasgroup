@@ -9,29 +9,32 @@ import os
 # Inicializar FastAPI
 app = FastAPI()
 
-# Cargar datos desde Excel si existe
+# Cargar datos desde Excel si existe (comentado para evitar consumo de memoria)
 documentos = []
-ruta_excel = "proveedores.xlsx"
+# ruta_excel = "proveedores.xlsx"
 
-if os.path.exists(ruta_excel):
-    print("📄 Cargando datos desde proveedores.xlsx...")
-    try:
-        xls = pd.read_excel(ruta_excel, sheet_name=None, skiprows=2)
-        for nombre_hoja, tabla in xls.items():
-            if tabla.empty or tabla.columns.isnull().any():
-                continue
-            tabla.dropna(how="all", inplace=True)
-            tabla.dropna(axis=1, how="all", inplace=True)
-            for _, row in tabla.iterrows():
-                contenido = f"Categoría: {nombre_hoja}\n" + "\n".join(
-                    [f"{col}: {row[col]}" for col in tabla.columns if pd.notna(row[col])]
-                )
-                documentos.append(Document(page_content=contenido))
-        print(f"✅ Se cargaron {len(documentos)} documentos.")
-    except Exception as e:
-        print("❌ Error al procesar el Excel:", e)
-else:
-    print("⚠️ No se encontró el archivo proveedores.xlsx. El sistema funcionará sin contexto.")
+# if os.path.exists(ruta_excel):
+#     print("📄 Cargando datos desde proveedores.xlsx...")
+#     try:
+#         xls = pd.read_excel(ruta_excel, sheet_name=None, skiprows=2)
+#         for nombre_hoja, tabla in xls.items():
+#             if tabla.empty or tabla.columns.isnull().any():
+#                 continue
+#             tabla.dropna(how="all", inplace=True)
+#             tabla.dropna(axis=1, how="all", inplace=True)
+#             for _, row in tabla.iterrows():
+#                 contenido = f"Categoría: {nombre_hoja}\n" + "\n".join(
+#                     [f"{col}: {row[col]}" for col in tabla.columns if pd.notna(row[col])]
+#                 )
+#                 documentos.append(Document(page_content=contenido))
+#         print(f"✅ Se cargaron {len(documentos)} documentos.")
+#     except Exception as e:
+#         print("❌ Error al procesar el Excel:", e)
+# else:
+#     print("⚠️ No se encontró el archivo proveedores.xlsx. El sistema funcionará sin contexto.")
+
+print("⚠️ Carga de Excel desactivada temporalmente para pruebas. El sistema funcionará sin contexto.")
+documentos = []  # Carga vacía para evitar uso de memoria
 
 # Crear vectorstore si hay documentos
 if documentos:
@@ -74,4 +77,3 @@ Respuesta:"""
     except Exception as e:
         print("❌ Error durante la generación:", e)
         return {"respuesta": "Hubo un problema al generar la respuesta."}
-
