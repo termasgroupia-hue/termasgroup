@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pandas
+langchain
+langchain-core
+langchain-community
+langchain-huggingface
+langchain-ollama
+
