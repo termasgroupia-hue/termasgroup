@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
 from langchain_core.documents import Document
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
 import pandas as pd
 import os
@@ -9,7 +7,7 @@ import os
 # Inicializar FastAPI
 app = FastAPI()
 
-# Cargar datos desde Excel si existe (comentado para evitar consumo de memoria)
+# Cargar datos desde Excel si existe (comentado para evitar uso de memoria en Render)
 documentos = []
 # ruta_excel = "proveedores.xlsx"
 
@@ -34,16 +32,7 @@ documentos = []
 #     print("⚠️ No se encontró el archivo proveedores.xlsx. El sistema funcionará sin contexto.")
 
 print("⚠️ Carga de Excel desactivada temporalmente para pruebas. El sistema funcionará sin contexto.")
-documentos = []  # Carga vacía para evitar uso de memoria
-
-# Crear vectorstore si hay documentos
-if documentos:
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
-    documentos = documentos[:1000]
-    vectorstore = FAISS.from_documents(documentos, embeddings)
-    retriever = vectorstore.as_retriever()
-else:
-    retriever = None
+retriever = None  # Desactivado para evitar uso de memoria
 
 # Inicializar modelo LLM
 llm = OllamaLLM(model="mistral")
@@ -77,3 +66,9 @@ Respuesta:"""
     except Exception as e:
         print("❌ Error durante la generación:", e)
         return {"respuesta": "Hubo un problema al generar la respuesta."}
+
+# Bloque para ejecutar el servidor en Render
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("asistente_termasgroup:app", host="0.0.0.0", port=port)
