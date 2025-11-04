@@ -1,11 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pandas
+openpyxl
+sentence-transformers
 langchain
 langchain-community
 langchain-core
 langchain-huggingface
-langchain-ollama
-openpyxl
-sentence-transformers
+huggingface_hub
 
