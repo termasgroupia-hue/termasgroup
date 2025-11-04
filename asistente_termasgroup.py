@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.chains import RetrievalQA
 from langchain.agents import create_react_agent
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
