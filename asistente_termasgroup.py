@@ -1,7 +1,20 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
+from langchain.chains import RetrievalQA
+from langchain.agents import create_react_agent
+from langchain.agents.agent_toolkits import create_retriever_tool
+from langchain_community.llms import HuggingFaceEndpoint
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import pandas as pd
 import os
 
+# Inicializar FastAPI
+app = FastAPI()
+
+# Cargar Excel optimizado
 documentos = []
 ruta_excel = "proveedores.xlsx"
 
@@ -25,37 +38,44 @@ if os.path.exists(ruta_excel):
 else:
     print("⚠️ No se encontró el archivo proveedores.xlsx.")
 
+# Crear retriever si hay documentos
+retriever = None
+if documentos:
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    docs_divididos = splitter.split_documents(documentos)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    vectorstore = FAISS.from_documents(docs_divididos, embeddings)
+    retriever = vectorstore.as_retriever()
+
+# Crear agente con herramientas
+llm = HuggingFaceEndpoint(
+    repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+    temperature=0.5,
+    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
+)
+
+tools = []
+if retriever:
+    herramienta = create_retriever_tool(
+        retriever,
+        name="buscador_proveedores",
+        description="Busca información sobre proveedores en distintas categorías"
+    )
+    tools.append(herramienta)
+
+agente = create_react_agent(llm=llm, tools=tools)
+
+# Endpoint POST /preguntar
 @app.post("/preguntar")
 async def preguntar(request: Request):
-    data = await request.json()
-    pregunta = data.get("pregunta", "").strip()
-
+    datos = await request.json()
+    pregunta = datos.get("pregunta", "")
     if not pregunta:
-        return {"respuesta": "No se recibió ninguna pregunta válida."}
+        return JSONResponse(content={"error": "No se recibió ninguna pregunta"}, status_code=400)
+    respuesta = agente.invoke(pregunta)
+    return JSONResponse(content={"respuesta": respuesta})
 
-    try:
-        if retriever:
-            contexto = retriever.invoke(pregunta, k=5)
-            contenido = "\n\n".join([doc.page_content for doc in contexto])
-        else:
-            contenido = "No hay datos cargados desde el Excel. Responde solo con conocimiento general."
-
-        prompt = f"""Eres un asistente experto en proveedores. Usa la siguiente información para responder de forma clara y útil:
-
-{contenido}
-
-Pregunta: {pregunta}
-Respuesta:"""
-
-        respuesta = llm.invoke(prompt)
-        return {"respuesta": respuesta}
-
-    except Exception as e:
-        print("❌ Error durante la generación:", e)
-        return {"respuesta": "Hubo un problema al generar la respuesta."}
-
-# Bloque para ejecutar el servidor en Render
+# Ejecutar servidor con Uvicorn en Render
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("asistente_termasgroup:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
