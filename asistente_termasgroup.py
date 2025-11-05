@@ -62,7 +62,7 @@ if retriever:
     )
     tools.append(herramienta)
 
-# ✅ Crear agente con initialize_agent (más estable)
+# ✅ Crear agente con initialize_agent (compatible y estable)
 agente = initialize_agent(
     tools=tools,
     llm=llm,
