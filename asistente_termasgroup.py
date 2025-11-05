@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.agents import initialize_agent, AgentType
+from langchain.agents import AgentType
+from langchain.agents.initialize import initialize_agent
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
