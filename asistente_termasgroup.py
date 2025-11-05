@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request
+from fastfrom fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_tool_calling_agent
+from langchain.agents.agent_executor import AgentExecutor
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
@@ -10,10 +11,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import pandas as pd
 import os
 
-# Inicializar FastAPI
+# ✅ Inicializar FastAPI
 app = FastAPI()
 
-# Cargar Excel optimizado
+# ✅ Cargar Excel optimizado
 documentos = []
 ruta_excel = "proveedores.xlsx"
 
@@ -37,7 +38,7 @@ if os.path.exists(ruta_excel):
 else:
     print("⚠️ No se encontró el archivo proveedores.xlsx.")
 
-# Crear retriever si hay documentos
+# ✅ Crear retriever si hay documentos
 retriever = None
 if documentos:
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -46,7 +47,7 @@ if documentos:
     vectorstore = FAISS.from_documents(docs_divididos, embeddings)
     retriever = vectorstore.as_retriever()
 
-# Crear agente con herramientas
+# ✅ Crear agente con herramientas
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mistral-7B-Instruct-v0.2",
     temperature=0.5,
@@ -62,11 +63,11 @@ if retriever:
     )
     tools.append(herramienta)
 
-# Crear agente compatible con LangChain actual
+# ✅ Crear agente compatible con LangChain actual
 agent = create_tool_calling_agent(llm=llm, tools=tools)
 agente = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-# Endpoint POST /preguntar
+# ✅ Endpoint POST /preguntar
 @app.post("/preguntar")
 async def preguntar(request: Request):
     datos = await request.json()
@@ -76,7 +77,7 @@ async def preguntar(request: Request):
     respuesta = agente.invoke({"input": pregunta})
     return JSONResponse(content={"respuesta": respuesta["output"]})
 
-# Ejecutar servidor con Uvicorn en Render
+# ✅ Ejecutar servidor con Uvicorn en Render
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
