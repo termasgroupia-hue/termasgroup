@@ -10,6 +10,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import pandas as pd
 import os
+import uvicorn
 
 # ✅ Inicializar FastAPI
 app = FastAPI()
@@ -63,7 +64,6 @@ if retriever:
     )
     tools.append(herramienta)
 
-# ✅ Crear agente con imports correctos
 agente = initialize_agent(
     tools=tools,
     llm=llm,
@@ -82,7 +82,4 @@ async def preguntar(request: Request):
     return JSONResponse(content={"respuesta": respuesta})
 
 # ✅ Ejecutar servidor con Uvicorn en Render
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
+uvicorn.run("asistente_termasgroup:app", host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
