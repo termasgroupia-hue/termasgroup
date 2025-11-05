@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.agents.initialize import initialize_agent
-from langchain.agents.agent_types import AgentType
+from langchain.agents import initialize_agent
+from langchain.agents import AgentType
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
@@ -85,3 +85,4 @@ async def preguntar(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
