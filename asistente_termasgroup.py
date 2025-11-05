@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.agents import create_react_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
@@ -62,7 +62,9 @@ if retriever:
     )
     tools.append(herramienta)
 
-agente = create_react_agent(llm=llm, tools=tools)
+# Crear agente compatible con LangChain actual
+agent = create_tool_calling_agent(llm=llm, tools=tools)
+agente = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 # Endpoint POST /preguntar
 @app.post("/preguntar")
@@ -71,8 +73,8 @@ async def preguntar(request: Request):
     pregunta = datos.get("pregunta", "")
     if not pregunta:
         return JSONResponse(content={"error": "No se recibió ninguna pregunta"}, status_code=400)
-    respuesta = agente.invoke(pregunta)
-    return JSONResponse(content={"respuesta": respuesta})
+    respuesta = agente.invoke({"input": pregunta})
+    return JSONResponse(content={"respuesta": respuesta["output"]})
 
 # Ejecutar servidor con Uvicorn en Render
 if __name__ == "__main__":
