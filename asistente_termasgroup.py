@@ -1,8 +1,7 @@
-from fastfrom fastapi import FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
-from langchain.agents import create_tool_calling_agent
-from langchain.agents.agent_executor import AgentExecutor
+from langchain.agents import initialize_agent, AgentType
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
@@ -26,7 +25,7 @@ if os.path.exists(ruta_excel):
                 continue
             tabla.dropna(how="all", inplace=True)
             tabla.dropna(axis=1, how="all", inplace=True)
-            tabla = tabla.head(100)  # Limitar a 100 filas por hoja
+            tabla = tabla.head(100)
             for _, row in tabla.iterrows():
                 contenido = f"Categoría: {nombre_hoja}\n" + "\n".join(
                     [f"{col}: {row[col]}" for col in tabla.columns if pd.notna(row[col])]
@@ -63,9 +62,13 @@ if retriever:
     )
     tools.append(herramienta)
 
-# ✅ Crear agente compatible con LangChain actual
-agent = create_tool_calling_agent(llm=llm, tools=tools)
-agente = AgentExecutor(agent=agent, tools=tools, verbose=True)
+# ✅ Crear agente con initialize_agent (más estable)
+agente = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
 
 # ✅ Endpoint POST /preguntar
 @app.post("/preguntar")
@@ -74,8 +77,8 @@ async def preguntar(request: Request):
     pregunta = datos.get("pregunta", "")
     if not pregunta:
         return JSONResponse(content={"error": "No se recibió ninguna pregunta"}, status_code=400)
-    respuesta = agente.invoke({"input": pregunta})
-    return JSONResponse(content={"respuesta": respuesta["output"]})
+    respuesta = agente.run(pregunta)
+    return JSONResponse(content={"respuesta": respuesta})
 
 # ✅ Ejecutar servidor con Uvicorn en Render
 if __name__ == "__main__":
