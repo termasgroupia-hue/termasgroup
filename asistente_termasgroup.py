@@ -27,7 +27,7 @@ if os.path.exists(ruta_excel):
                 continue
             tabla.dropna(how="all", inplace=True)
             tabla.dropna(axis=1, how="all", inplace=True)
-            tabla = tabla.head(100)
+            tabla = tabla.head(50)  # 🔽 Reducido para menor carga
             for _, row in tabla.iterrows():
                 contenido = f"Categoría: {nombre_hoja}\n" + "\n".join(
                     [f"{col}: {row[col]}" for col in tabla.columns if pd.notna(row[col])]
@@ -42,15 +42,15 @@ else:
 # ✅ Crear retriever si hay documentos
 retriever = None
 if documentos:
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=30)  # 🔽 Reducido
     docs_divididos = splitter.split_documents(documentos)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectorstore = FAISS.from_documents(docs_divididos, embeddings)
     retriever = vectorstore.as_retriever()
 
-# ✅ Crear agente con herramientas
+# ✅ Crear agente con modelo más ligero
 llm = HuggingFaceEndpoint(
-    repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+    repo_id="google/flan-t5-base",  # 🔽 Modelo más pequeño
     temperature=0.5,
     huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
 )
